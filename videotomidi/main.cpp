@@ -57,10 +57,10 @@ private:
 
 public:
     Analysis(); // コンストラクタ
-    void Set_Coodinates(); // 鍵盤の座標を設定する関数
-    void Set_Color(); // 鍵盤が押されていない初期状態のRGBを記録する関数
+    void Set_Coodinates(); // 鍵盤の座標をセットする関数 1
+    void Set_Color(); // 鍵盤が押されていない初期状態(デフォルトカラー)のRGBを記録(取得)する関数 3
     void Analyze(); // 映像の解析を行い、txtファイルを生成する関数
-    void Check_Coodinates(); // 画面の座標をチェックする関数
+    void Check_Coodinates(); // 画面の座標をチェックする関数 2 4
 
     // 各鍵盤の色が変わったかチェックする関数(色が変わっていたらtrueを返す)
     bool Change_Color_w(int b, int g, int r);// 白鍵
@@ -86,15 +86,12 @@ Analysis::Analysis() {
 
 // 鍵盤の座標を設定する関数
 void Analysis::Set_Coodinates() {
-    cout << "Set_Coodinates() 座標セット関数" << endl;
-
-    // 720p 88鍵盤 の座標設定
-    cout << "Mode = 720p 88 key" << endl;
+    cout << "Set_Coodinates()" << endl;
 
     // 白鍵
     // Y座標(鍵盤は、横に並んでいるので縦軸は変更なし)
     key_white_y = 665;
-    // X座標を計算
+    // X座標を計算(白鍵は、均等な配置のため、簡単な処理)
     for (int i = 0; i < 52; i++) key_white_x[i] = (24.5 / 2.0) + i * 24.6;
 
     // 黒鍵
@@ -129,8 +126,7 @@ void Analysis::Set_Coodinates() {
             key_x[num] = key_white_x[white];
             white++;
             cout << num << "w";
-        }
-        else {
+        } else {
             // 黒鍵
             key_x[num] = key_black_x[black];
             black++;
@@ -149,7 +145,7 @@ void Analysis::Set_Coodinates() {
 
 // 鍵盤が押されていない初期状態のRGB値を記録する関数
 void Analysis::Set_Color() {
-    cout << "Set_Color() デフォルトカラー取得関数" << endl;
+    cout << "Set_Color()" << endl;
 
     // 各鍵盤の初期状態のRGB値を記録
     // 白鍵
@@ -169,7 +165,8 @@ void Analysis::Set_Color() {
 void Analysis::Analyze() {
     const static double fps = movie.Get_FPS();
     // 1フレームずつ処理する
-    for (int frame_count = 1;; frame = movie.Get_Next_Frame()) {
+    for (int frame_count = 1;; frame = movie.Ge
+            t_Next_Frame()) {
         if (frame.empty()) break;
 
         Check_Key(); // キーのイベントをアップデート
@@ -192,7 +189,7 @@ void Analysis::Analyze() {
 
 // 座標のチェックを行う関数
 void Analysis::Check_Coodinates() {
-    cout << "Check_Coodinates() 座標チェック関数" << endl;
+    cout << "Check_Coodinates()" << endl;
 
     cv::namedWindow("movie", cv::WINDOW_AUTOSIZE);
 
@@ -250,8 +247,7 @@ void Analysis::Check_Key() {
                     Register_Event(key, 1);
                     key_event[key] = true;
                 }
-            }
-            else {
+            } else {
                 // 白鍵の色が元に戻ったとき
                 if (!Change_Color_w(Get_Color_b(x, y), Get_Color_g(x, y), Get_Color_r(x, y))) {
                     cout << "[" << key << "W:off]" << endl;
@@ -260,8 +256,7 @@ void Analysis::Check_Key() {
                     key_event[key] = false;
                 }
             }
-        }
-        else {
+        } else {
             // 黒鍵
             y = key_black_y;
             if (!key_event[key]) {
@@ -272,8 +267,7 @@ void Analysis::Check_Key() {
                     Register_Event(key, 1);
                     key_event[key] = true;
                 }
-            }
-            else {
+            } else {
                 // 黒鍵の色が元に戻ったとき
                 if (!Change_Color_b(Get_Color_b(x, y), Get_Color_g(x, y), Get_Color_r(x, y))) {
                     cout << "[" << key << "B:off]" << endl;
@@ -287,25 +281,18 @@ void Analysis::Check_Key() {
 }
 
 // 指定された座標の青色情報を取得する関数
-int Analysis::Get_Color_b(int x, int y) {
-    return frame.at<Vec3b>(y, x)[0];
-}
+int Analysis::Get_Color_b(int x, int y) { return frame.at<Vec3b>(y, x)[0]; }
 
 // 指定された座標の緑色情報を取得する関数
-int Analysis::Get_Color_g(int x, int y) {
-    return frame.at<Vec3b>(y, x)[1];
-}
+int Analysis::Get_Color_g(int x, int y) { return frame.at<Vec3b>(y, x)[1]; }
 
 // 指定された座標の赤色情報を取得する関数
-int Analysis::Get_Color_r(int x, int y) {
-    return frame.at<Vec3b>(y, x)[2];
-}
+int Analysis::Get_Color_r(int x, int y) { return frame.at<Vec3b>(y, x)[2]; }
 
 // 与えられたキー番号が白鍵かどうかを判定する関数
 bool Analysis::True_White(int n) {
     n += 9;
-    int a = n % 12;
-    switch (a) {
+    switch (n % 12) {
     case 0: return true;   // ド
     case 1: return false;  // #ド
     case 2: return true;   // レ
@@ -328,9 +315,7 @@ void Analysis::Register_Event(int key, int event) {
     std::ostringstream key_;
     key_ << key;
 
-    str += "-";
-    str += to_string(event);
-    str += key_.str();
+    str += "-" + to_string(event) + key_.str();
     active_key_sum++;
 }
 
